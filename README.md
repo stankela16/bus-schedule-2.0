@@ -1,1 +1,1 @@
-# View in [Github Pages](https://stankela16.github.io/bus-schedule)
+# View in [www.nikolastanojevic.tech](www.nikolastanojevic.tech)
