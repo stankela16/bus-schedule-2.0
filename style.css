@@ -17,13 +17,13 @@ body {
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }
 
-@media only screen and (min-width: 768px) {
-    .clock {
+
+#clock {
       font-size: 2rem; /* Prilagodite veličinu fonta prema potrebi */
-    }
-  }
-  
-  
+      margin-top: 20px;
+}
+
+
 h1, h2 {
     text-align: center;
 }
