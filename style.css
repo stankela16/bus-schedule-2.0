@@ -19,9 +19,14 @@ body {
 
 #clock {
     font-size: 2rem; /* Adjust the font size as needed */
-    margin-left: 100px;
+    margin-left: 95px;
 }
 
+#date {
+    font-size: 1.5rem; /* Adjust the font size as needed */
+    margin-left: 45px;
+    margin-bottom: 10px;
+}
 
 h1, h2 {
     text-align: center;

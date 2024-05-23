@@ -133,21 +133,32 @@ function formatTime(time) {
 }
 
 
+function capitalizeFirstLetter(string) {
+    return string.charAt(0).toUpperCase() + string.slice(1);
+}
+
 function updateClock() {
     const now = new Date();
     const hours = now.getHours().toString().padStart(2, '0');
     const minutes = now.getMinutes().toString().padStart(2, '0');
     const seconds = now.getSeconds().toString().padStart(2, '0');
+    
+    // Formatiranje datuma na engleskom jeziku
+    const options = { weekday: 'long', year: 'numeric', month: 'short', day: '2-digit' };
+    let dateStr = now.toLocaleDateString('sr-Latn-RS', options);
+    dateStr = capitalizeFirstLetter(dateStr); // Kapitalizujemo prvo slovo dana
+    
+    // Formatiranje vremena
     const timeString = `${hours}:${minutes}:${seconds}`;
+    
+    // Postavljanje datuma i vremena u odgovarajuće elemente
+    document.getElementById('date').textContent = dateStr;
     document.getElementById('clock').textContent = timeString;
 }
 
-// Ažuriranje sata svakih 1000 ms (1 sekunda)
-setInterval(updateClock, 1000);
 
-// Ažuriranje polazaka svaki put kada se stranica učita
-window.onload = updateDepartures;
 
+// Postavljanje funkcije updateDepartures da se pozove pri učitavanju stranice
 window.onload = function() {
     updateDepartures(); // Odmah ažuriraj polaske kada se stranica učita
     updateClock(); // Odmah prikaži trenutno vreme kada se stranica učita
