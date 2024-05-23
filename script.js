@@ -52,17 +52,30 @@ function updateDepartures() {
     const medakovic3Departures = calculateMinutesUntilDeparture(now, raspored_medakovic3);
     const voivodeVlahovicaDepartures = calculateMinutesUntilDeparture(now, raspored_voivode_vlahovica);
 
-    for (const mins of medakovic3Departures) {
+    medakovic3Departures.forEach(mins => {
         const li = document.createElement('li');
         li.textContent = `Za ${mins} minuta`;
         medakovic3List.appendChild(li);
-    }
+    });
 
-    for (const mins of voivodeVlahovicaDepartures) {
+    voivodeVlahovicaDepartures.forEach(mins => {
         const li = document.createElement('li');
         li.textContent = `Za ${mins} minuta`;
         voivodeVlahovicaList.appendChild(li);
-    }
+    });
 }
 
-document.addEventListener('DOMContentLoaded', updateDepartures);
+function updateClock() {
+    const now = new Date();
+    const hours = now.getHours().toString().padStart(2, '0');
+    const minutes = now.getMinutes().toString().padStart(2, '0');
+    const seconds = now.getSeconds().toString().padStart(2, '0');
+    const timeString = `${hours}:${minutes}:${seconds}`;
+    document.getElementById('clock').textContent = timeString;
+}
+
+// Ažuriranje sata svakih 1000 ms (1 sekunda)
+setInterval(updateClock, 1000);
+
+// Ažuriranje polazaka svaki put kada se stranica učita
+window.onload = updateDepartures;
