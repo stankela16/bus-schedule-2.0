@@ -4,10 +4,9 @@ body {
     margin: 0;
     padding: 0;
     display: flex;
-    justify-content: center;
+    flex-direction: column;
     align-items: center;
     height: 100vh;
-    flex-direction: column; /* Promena da bi sat bio iznad sadržaja */
 }
 
 .container {
@@ -19,7 +18,8 @@ body {
 
 
 #clock {
-      font-size: 2rem; /* Prilagodite veličinu fonta prema potrebi */
+    font-size: 2rem; /* Adjust the font size as needed */
+    margin-top: 20px; /* Add a top margin to push it down from the top edge */
 }
 
 
