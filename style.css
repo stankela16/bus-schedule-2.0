@@ -19,7 +19,7 @@ body {
 
 #clock {
     font-size: 2rem; /* Adjust the font size as needed */
-    margin-top: 20px; /* Add a top margin to push it down from the top edge */
+    margin-left: 100px;
 }
 
 
