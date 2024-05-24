@@ -71,6 +71,7 @@ const raspored_m3_week = [
 ];
 
 
+
 function parseTimeStr(timeStr) {
     const now = new Date();
     const [hours, minutes] = timeStr.split(':').map(Number);
@@ -105,6 +106,9 @@ function calculateMinutesUntilDeparture(departures, now) {
 
 function updateDepartures() {
     const now = globalClock || new Date();
+    const dayOfWeek = now.getDay();
+
+    const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
 
     const medakovic3List = document.getElementById('medakovic3-list');
     const voivodeVlahovicaList = document.getElementById('voivode-vlahovica-list');
@@ -112,8 +116,8 @@ function updateDepartures() {
     medakovic3List.innerHTML = '';
     voivodeVlahovicaList.innerHTML = '';
 
-    const medakovic3Departures = calculateMinutesUntilDeparture(raspored_medakovic3, now);
-    const voivodeVlahovicaDepartures = calculateMinutesUntilDeparture(raspored_voivode_vlahovica, now);
+    const medakovic3Departures = isWeekend ? calculateMinutesUntilDeparture(raspored_m3_week, now) : calculateMinutesUntilDeparture(raspored_medakovic3, now);
+    const voivodeVlahovicaDepartures = isWeekend ? calculateMinutesUntilDeparture(raspored_vv_week, now) : calculateMinutesUntilDeparture(raspored_voivode_vlahovica, now);
 
     medakovic3Departures.forEach(mins => {
         const li = document.createElement('li');
@@ -129,6 +133,7 @@ function updateDepartures() {
 
     lastUpdatedMinutes = now.getMinutes();
 }
+
 
 function formatTime(time, withoutSeconds = false) {
     const hours = time.getHours().toString().padStart(2, '0');
@@ -166,33 +171,10 @@ function refreshPage() {
 
 document.getElementById('refreshButton').addEventListener('click', refreshPage);
 
-document.addEventListener('DOMContentLoaded', function() {
-    const accordionHeadings = document.querySelectorAll('.accordion-heading');
 
-    accordionHeadings.forEach(function(heading, index) {
-        heading.addEventListener('click', function() {
-            heading.classList.toggle('active');
-            const content = heading.nextElementSibling;
-            content.classList.toggle('active');
-            
-            const siblings = heading.parentElement.querySelectorAll('.accordion-heading');
-            siblings.forEach(function(sibling) {
-                if (sibling !== heading) {
-                    sibling.classList.remove('active');
-                    sibling.nextElementSibling.classList.remove('active');
-                }
-            });
-        });
-
-        if (index === 0) {
-            heading.classList.add('active');
-            heading.nextElementSibling.classList.add('active');
-        }
-    });
-});
 
 function showNearbyDepartures() {
-    console.log("Funkcija showNearbyDepartures() je pozvana."); 
+    console.log("Funkcija showNearbyDepartures() je pozvana.");
 
     const nearbyDeparturesDiv = document.getElementById('nearby-departures');
     nearbyDeparturesDiv.innerHTML = '';
@@ -219,15 +201,6 @@ function showNearbyDepartures() {
     }
     nearbyDeparturesDiv.appendChild(medakovic3List);
 
-    const medakovic3Content = document.createElement('div');
-    medakovic3Content.classList.add('accordion-content');
-    medakovic3Content.appendChild(medakovic3List.cloneNode(true));
-    nearbyDeparturesDiv.appendChild(medakovic3Content);
-
-    medakovic3Heading.addEventListener('click', function() {
-        medakovic3Content.classList.toggle('active');
-    });
-
     const voivodeVlahovicaHeading = document.createElement('h3');
     voivodeVlahovicaHeading.textContent = 'Polasci od Vojvode Vlahovića:';
     nearbyDeparturesDiv.appendChild(voivodeVlahovicaHeading);
@@ -246,15 +219,6 @@ function showNearbyDepartures() {
         });
     }
     nearbyDeparturesDiv.appendChild(voivodeVlahovicaList);
-
-    const voivodeVlahovicaContent = document.createElement('div');
-    voivodeVlahovicaContent.classList.add('accordion-content');
-    voivodeVlahovicaContent.appendChild(voivodeVlahovicaList.cloneNode(true));
-    nearbyDeparturesDiv.appendChild(voivodeVlahovicaContent);
-
-    voivodeVlahovicaHeading.addEventListener('click', function() {
-        voivodeVlahovicaContent.classList.toggle('active');
-    });
 }
 
 function getNearbyDepartures(departureList, time, previousCount, nextCount) {
@@ -278,27 +242,27 @@ function getNearbyDepartures(departureList, time, previousCount, nextCount) {
         const nextTime = new Date(currentTime + i * 30 * 60000);
         const nearestDeparture = findNearestDeparture(departureList, nextTime);
         if (nearestDeparture) {
-        nearbyDepartures.push(nearestDeparture);
+            nearbyDepartures.push(nearestDeparture);
         }
     }
-        
+
     return nearbyDepartures;
 }
-        
+
 function findNearestDeparture(departureList, time) {
-        const currentTime = time.getHours() * 60 + time.getMinutes();
-        let nearestDeparture = null;
-        let minDifference = Infinity;
-        
-        departureList.forEach(departureTime => {
+    const currentTime = time.getHours() * 60 + time.getMinutes();
+    let nearestDeparture = null;
+    let minDifference = Infinity;
+
+    departureList.forEach(departureTime => {
         const [hours, minutes] = departureTime.split(':');
         const departureMinutes = parseInt(hours) * 60 + parseInt(minutes);
         const difference = Math.abs(departureMinutes - currentTime);
         if (difference < minDifference) {
-        minDifference = difference;
-        nearestDeparture = departureTime;
+            minDifference = difference;
+            nearestDeparture = departureTime;
         }
     });
-        
+
     return nearestDeparture;
 }

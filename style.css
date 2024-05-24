@@ -94,30 +94,5 @@ li {
     margin-top: 8px;
 }
 
-/* Stilizacija za akordeon */
-      .accordion {
-        margin-top: 20px; /* Dodajemo malu razdaljinu između polazaka i akordeona */
-      }
 
-      .accordion-heading {
-        background-color: #f1f1f1; /* Boja naslova */
-        color: #333; /* Boja teksta */
-        padding: 10px 20px; /* Podešavanje razmaka */
-        margin: 0;
-        cursor: pointer; /* Pokazivač miša će biti ruka kad pređe preko naslova */
-      }
-
-      .accordion-content {
-        display: none; /* Početno sakrijemo sadržaj akordeona */
-        padding: 10px 20px; /* Podešavanje razmaka */
-      }
-
-      /* Stilizacija za otvoreni akordeon */
-      .accordion-heading.active {
-        background-color: #ddd; /* Boja naslova kad je otvoren */
-      }
-
-      .accordion-content.active {
-        display: block; /* Prikazujemo sadržaj kad je akordeon otvoren */
-      }
 
