@@ -177,6 +177,9 @@ function refreshPage() {
 
 document.getElementById('refreshButton').addEventListener('click', refreshPage);
 
+
+
+
 function showNearbyDepartures() {
     console.log("Funkcija showNearbyDepartures() je pozvana."); 
 
@@ -184,34 +187,91 @@ function showNearbyDepartures() {
     nearbyDeparturesDiv.innerHTML = '';
 
     const now = new Date();
-
-    const nearbyMedakovic3Departures = getNearbyDepartures(raspored_medakovic3, now);
-    const nearbyVoivodeVlahovicaDepartures = getNearbyDepartures(raspored_voivode_vlahovica, now);
+    const currentHour = now.getHours();
 
     const medakovic3Heading = document.createElement('h3');
-    medakovic3Heading.textContent = 'Polasci ka Medakoviću 3:';
+    medakovic3Heading.textContent = 'Polasci od Medaković 3:';
     nearbyDeparturesDiv.appendChild(medakovic3Heading);
 
     const medakovic3List = document.createElement('ul');
-    nearbyMedakovic3Departures.forEach(departure => {
-        const li = document.createElement('li');
-        li.textContent = departure;
-        medakovic3List.appendChild(li);
-    });
+    // Prethodni sat, trenutni sat i naredni sat
+    for (let i = currentHour - 1; i <= currentHour + 1; i++) {
+        const listColor = i === currentHour ? '#3dc792' : i < currentHour ? 'red' : 'blue';
+        raspored_medakovic3.forEach(departure => {
+            const departureHour = parseInt(departure.split(':')[0]);
+            if (departureHour === i) {
+                const li = document.createElement('li');
+                li.textContent = departure;
+                li.style.backgroundColor = listColor;
+                medakovic3List.appendChild(li);
+            }
+        });
+    }
     nearbyDeparturesDiv.appendChild(medakovic3List);
 
     const voivodeVlahovicaHeading = document.createElement('h3');
-    voivodeVlahovicaHeading.textContent = 'Polasci ka Vojvode Vlahovića:';
+    voivodeVlahovicaHeading.textContent = 'Polasci od Vojvode Vlahovića:';
     nearbyDeparturesDiv.appendChild(voivodeVlahovicaHeading);
 
     const voivodeVlahovicaList = document.createElement('ul');
-    nearbyVoivodeVlahovicaDepartures.forEach(departure => {
-        const li = document.createElement('li');
-        li.textContent = departure;
-        voivodeVlahovicaList.appendChild(li);
-    });
+    // Prethodni sat, trenutni sat i naredni sat
+    for (let i = currentHour - 1; i <= currentHour + 1; i++) {
+        const listColor = i === currentHour ? '#3dc792' : i < currentHour ? 'red' : 'blue';
+        raspored_voivode_vlahovica.forEach(departure => {
+            const departureHour = parseInt(departure.split(':')[0]);
+            if (departureHour === i) {
+                const li = document.createElement('li');
+                li.textContent = departure;
+                li.style.backgroundColor = listColor;
+                voivodeVlahovicaList.appendChild(li);
+            }
+        });
+    }
     nearbyDeparturesDiv.appendChild(voivodeVlahovicaList);
 }
+
+
+
+
+
+
+
+
+
+function getNearbyDepartures(departureList, time, previousCount, nextCount) {
+    const nearbyDepartures = [];
+
+    const currentTime = time.getTime();
+
+    // Prethodni polasci
+    for (let i = 1; i <= previousCount; i++) {
+        const previousTime = new Date(currentTime - i * 30 * 60000);
+        const nearestDeparture = findNearestDeparture(departureList, previousTime);
+        if (nearestDeparture) {
+            nearbyDepartures.unshift(nearestDeparture);
+        }
+    }
+
+    // Trenutni polasci
+    const nearestDepartureCurrent = findNearestDeparture(departureList, time);
+    if (nearestDepartureCurrent) {
+        nearbyDepartures.unshift(nearestDepartureCurrent);
+    }
+
+    // Naredni polasci
+    for (let i = 1; i <= nextCount; i++) {
+        const nextTime = new Date(currentTime + i * 30 * 60000);
+        const nearestDeparture = findNearestDeparture(departureList, nextTime);
+        if (nearestDeparture) {
+            nearbyDepartures.push(nearestDeparture);
+        }
+    }
+
+    return nearbyDepartures;
+}
+
+
+
 
 
 function findNearestDeparture(departureList, time) {
@@ -232,29 +292,5 @@ function findNearestDeparture(departureList, time) {
     return nearestDeparture;
 }
 
-function getNearbyDepartures(departureList, time) {
-    const nearbyDepartures = [];
 
-    const currentTime = time.getTime();
-
-    // Polasci unazad 30 minuta
-    for (let i = 1; i <= 2; i++) {
-        const previousTime = new Date(currentTime - i * 30 * 60000);
-        const nearestDeparture = findNearestDeparture(departureList, previousTime);
-        if (nearestDeparture) {
-            nearbyDepartures.unshift(nearestDeparture);
-        }
-    }
-
-    // Polasci unapred 60 minuta
-    for (let i = 1; i <= 3; i++) {
-        const nextTime = new Date(currentTime + i * 60 * 60000);
-        const nearestDeparture = findNearestDeparture(departureList, nextTime);
-        if (nearestDeparture) {
-            nearbyDepartures.push(nearestDeparture);
-        }
-    }
-
-    return nearbyDepartures;
-}
 
