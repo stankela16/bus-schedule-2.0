@@ -74,11 +74,22 @@ const raspored_m3_week = [
 function parseTimeStr(timeStr) {
     const now = new Date();
     const [hours, minutes] = timeStr.split(':').map(Number);
-    const time = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hours, minutes);
-    return time;
+    return new Date(now.getFullYear(), now.getMonth(), now.getDate(), hours, minutes);
 }
 
-function calculateMinutesUntilDeparture(now, departures) {
+let initialTime = null;
+let globalClock = null;
+let lastUpdatedMinutes = null;
+
+function updateGlobalClock() {
+    globalClock = new Date();
+    if (globalClock.getMinutes() !== lastUpdatedMinutes) {
+        updateDepartures();
+    }
+}
+
+function calculateMinutesUntilDeparture(departures) {
+    const now = initialTime || new Date();
     const minutesUntilDeparture = [];
     let count = 0;
     for (const departureStr of departures) {
@@ -94,23 +105,23 @@ function calculateMinutesUntilDeparture(now, departures) {
 }
 
 function updateDepartures() {
-    const now = new Date();
-    
+    const now = globalClock || new Date();
+
     const medakovic3List = document.getElementById('medakovic3-list');
     const voivodeVlahovicaList = document.getElementById('voivode-vlahovica-list');
 
     medakovic3List.innerHTML = '';
     voivodeVlahovicaList.innerHTML = '';
 
-    const medakovic3Departures = calculateMinutesUntilDeparture(now, raspored_medakovic3);
-    const voivodeVlahovicaDepartures = calculateMinutesUntilDeparture(now, raspored_voivode_vlahovica);
+    const medakovic3Departures = calculateMinutesUntilDeparture(raspored_medakovic3, now);
+    const voivodeVlahovicaDepartures = calculateMinutesUntilDeparture(raspored_voivode_vlahovica, now);
 
     medakovic3Departures.forEach(mins => {
         const li = document.createElement('li');
         if (mins === 0) {
-            li.textContent = `Sada (${formatTime(now)})`;
+            li.textContent = `Sada`;
         } else {
-            li.textContent = `Za ${mins} minuta (${formatTime(new Date(now.getTime() + mins * 60000))})`;
+            li.textContent = `Za ${mins} minuta`;
         }
         medakovic3List.appendChild(li);
     });
@@ -118,59 +129,132 @@ function updateDepartures() {
     voivodeVlahovicaDepartures.forEach(mins => {
         const li = document.createElement('li');
         if (mins === 0) {
-            li.textContent = `Sada (${formatTime(now)})`;
+            li.textContent = `Sada`;
         } else {
-            li.textContent = `Za ${mins} minuta (${formatTime(new Date(now.getTime() + mins * 60000))})`;
+            li.textContent = `Za ${mins} minuta`;
         }
         voivodeVlahovicaList.appendChild(li);
     });
+
+    lastUpdatedMinutes = now.getMinutes();
 }
 
-function formatTime(time) {
+function formatTime(time, withoutSeconds = false) {
     const hours = time.getHours().toString().padStart(2, '0');
     const minutes = time.getMinutes().toString().padStart(2, '0');
-    return `${hours}:${minutes}`;
+    if (withoutSeconds) {
+        return `${hours}:${minutes}`;
+    }
+    const seconds = time.getSeconds().toString().padStart(2, '0');
+    return `${hours}:${minutes}:${seconds}`;
 }
 
 
-function capitalizeFirstLetter(string) {
-    return string.charAt(0).toUpperCase() + string.slice(1);
-}
 
 function updateClock() {
     const now = new Date();
-    const hours = now.getHours().toString().padStart(2, '0');
-    const minutes = now.getMinutes().toString().padStart(2, '0');
-    const seconds = now.getSeconds().toString().padStart(2, '0');
-    
-    // Formatiranje datuma na engleskom jeziku
     const options = { weekday: 'long', year: 'numeric', month: 'short', day: '2-digit' };
     let dateStr = now.toLocaleDateString('sr-Latn-RS', options);
-    dateStr = capitalizeFirstLetter(dateStr); // Kapitalizujemo prvo slovo dana
+    dateStr = dateStr.charAt(0).toUpperCase() + dateStr.slice(1);
     
-    // Formatiranje vremena
-    const timeString = `${hours}:${minutes}:${seconds}`;
-    
-    // Postavljanje datuma i vremena u odgovarajuće elemente
     document.getElementById('date').textContent = dateStr;
-    document.getElementById('clock').textContent = timeString;
+    document.getElementById('clock').textContent = formatTime(now);
 }
 
+setInterval(updateGlobalClock, 1000);
+setInterval(updateClock, 1000);
 
-
-// Postavljanje funkcije updateDepartures da se pozove pri učitavanju stranice
 window.onload = function() {
-    updateDepartures(); // Odmah ažuriraj polaske kada se stranica učita
-    updateClock(); // Odmah prikaži trenutno vreme kada se stranica učita
-
-    // Ažuriraj polaske svake sekunde nakon učitavanja stranice
-    setInterval(updateClock, 1000); // svake sekunde
+    initialTime = new Date();
+    updateDepartures();
+    updateClock();
+    showNearbyDepartures();
 };
 
-// Funkcija koja će se pozvati kada se pritisne dugme za osvežavanje
 function refreshPage() {
-    location.reload(); // Ova funkcija osvežava stranicu
+    location.reload();
 }
 
-// Postavljanje događaja na dugme za osvežavanje
 document.getElementById('refreshButton').addEventListener('click', refreshPage);
+
+function showNearbyDepartures() {
+    console.log("Funkcija showNearbyDepartures() je pozvana."); 
+
+    const nearbyDeparturesDiv = document.getElementById('nearby-departures');
+    nearbyDeparturesDiv.innerHTML = '';
+
+    const now = new Date();
+
+    const nearbyMedakovic3Departures = getNearbyDepartures(raspored_medakovic3, now);
+    const nearbyVoivodeVlahovicaDepartures = getNearbyDepartures(raspored_voivode_vlahovica, now);
+
+    const medakovic3Heading = document.createElement('h3');
+    medakovic3Heading.textContent = 'Polasci ka Medakoviću 3:';
+    nearbyDeparturesDiv.appendChild(medakovic3Heading);
+
+    const medakovic3List = document.createElement('ul');
+    nearbyMedakovic3Departures.forEach(departure => {
+        const li = document.createElement('li');
+        li.textContent = departure;
+        medakovic3List.appendChild(li);
+    });
+    nearbyDeparturesDiv.appendChild(medakovic3List);
+
+    const voivodeVlahovicaHeading = document.createElement('h3');
+    voivodeVlahovicaHeading.textContent = 'Polasci ka Vojvode Vlahovića:';
+    nearbyDeparturesDiv.appendChild(voivodeVlahovicaHeading);
+
+    const voivodeVlahovicaList = document.createElement('ul');
+    nearbyVoivodeVlahovicaDepartures.forEach(departure => {
+        const li = document.createElement('li');
+        li.textContent = departure;
+        voivodeVlahovicaList.appendChild(li);
+    });
+    nearbyDeparturesDiv.appendChild(voivodeVlahovicaList);
+}
+
+
+function findNearestDeparture(departureList, time) {
+    const currentTime = time.getHours() * 60 + time.getMinutes();
+    let nearestDeparture = null;
+    let minDifference = Infinity;
+
+    departureList.forEach(departureTime => {
+        const [hours, minutes] = departureTime.split(':');
+        const departureMinutes = parseInt(hours) * 60 + parseInt(minutes);
+        const difference = Math.abs(departureMinutes - currentTime);
+        if (difference < minDifference) {
+            minDifference = difference;
+            nearestDeparture = departureTime;
+        }
+    });
+
+    return nearestDeparture;
+}
+
+function getNearbyDepartures(departureList, time) {
+    const nearbyDepartures = [];
+
+    const currentTime = time.getTime();
+
+    // Polasci unazad 30 minuta
+    for (let i = 1; i <= 2; i++) {
+        const previousTime = new Date(currentTime - i * 30 * 60000);
+        const nearestDeparture = findNearestDeparture(departureList, previousTime);
+        if (nearestDeparture) {
+            nearbyDepartures.unshift(nearestDeparture);
+        }
+    }
+
+    // Polasci unapred 60 minuta
+    for (let i = 1; i <= 3; i++) {
+        const nextTime = new Date(currentTime + i * 60 * 60000);
+        const nearestDeparture = findNearestDeparture(departureList, nextTime);
+        if (nearestDeparture) {
+            nearbyDepartures.push(nearestDeparture);
+        }
+    }
+
+    return nearbyDepartures;
+}
+
