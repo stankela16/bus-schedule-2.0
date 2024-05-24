@@ -166,3 +166,11 @@ window.onload = function() {
     // Ažuriraj polaske svake sekunde nakon učitavanja stranice
     setInterval(updateClock, 1000); // svake sekunde
 };
+
+// Funkcija koja će se pozvati kada se pritisne dugme za osvežavanje
+function refreshPage() {
+    location.reload(); // Ova funkcija osvežava stranicu
+}
+
+// Postavljanje događaja na dugme za osvežavanje
+document.getElementById('refreshButton').addEventListener('click', refreshPage);
