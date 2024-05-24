@@ -1,1 +1,1 @@
-# View in [www.26l.nikolastanojevic.tech](https://www.26l.nikolastanojevic.tech)
+# View in [26l.nikolastanojevic.tech](https://26l.nikolastanojevic.tech)
