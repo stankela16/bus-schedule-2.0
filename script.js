@@ -181,6 +181,12 @@ function showNearbyDepartures() {
 
     const now = new Date();
     const currentHour = now.getHours();
+    const dayOfWeek = now.getDay();
+
+    const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
+
+    const medakovic3Departures = isWeekend ? raspored_m3_week : raspored_medakovic3;
+    const voivodeVlahovicaDepartures = isWeekend ? raspored_vv_week : raspored_voivode_vlahovica;
 
     const medakovic3Heading = document.createElement('h3');
     medakovic3Heading.textContent = 'Polasci od Medaković 3:';
@@ -189,7 +195,7 @@ function showNearbyDepartures() {
     const medakovic3List = document.createElement('ul');
     for (let i = currentHour - 1; i <= currentHour + 1; i++) {
         const listColor = i === currentHour ? '#3dc792' : i < currentHour ? 'red' : 'blue';
-        raspored_medakovic3.forEach(departure => {
+        medakovic3Departures.forEach(departure => {
             const departureHour = parseInt(departure.split(':')[0]);
             if (departureHour === i) {
                 const li = document.createElement('li');
@@ -208,7 +214,7 @@ function showNearbyDepartures() {
     const voivodeVlahovicaList = document.createElement('ul');
     for (let i = currentHour - 1; i <= currentHour + 1; i++) {
         const listColor = i === currentHour ? '#3dc792' : i < currentHour ? 'red' : 'blue';
-        raspored_voivode_vlahovica.forEach(departure => {
+        voivodeVlahovicaDepartures.forEach(departure => {
             const departureHour = parseInt(departure.split(':')[0]);
             if (departureHour === i) {
                 const li = document.createElement('li');
@@ -220,6 +226,7 @@ function showNearbyDepartures() {
     }
     nearbyDeparturesDiv.appendChild(voivodeVlahovicaList);
 }
+
 
 function getNearbyDepartures(departureList, time, previousCount, nextCount) {
     const nearbyDepartures = [];
