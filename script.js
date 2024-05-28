@@ -73,9 +73,10 @@ const raspored_m3_week = [
 
 
 function parseTimeStr(timeStr) {
-    const now = new Date();
     const [hours, minutes] = timeStr.split(':').map(Number);
-    return new Date(now.getFullYear(), now.getMonth(), now.getDate(), hours, minutes);
+    const now = new Date();
+    const dateInBelgrade = new Date(now.toLocaleString('en-US', { timeZone: 'Europe/Belgrade' }));
+    return new Date(dateInBelgrade.getFullYear(), dateInBelgrade.getMonth(), dateInBelgrade.getDate(), hours, minutes);
 }
 
 let initialTime = null;
@@ -103,10 +104,10 @@ function calculateMinutesUntilDeparture(departures, now) {
     }
     return minutesUntilDeparture;
 }
-
 function updateDepartures() {
-    const now = globalClock || new Date();
-    const dayOfWeek = now.getDay();
+    const now = new Date();
+    const nowInBelgrade = new Date(now.toLocaleString('en-US', { timeZone: 'Europe/Belgrade' }));
+    const dayOfWeek = nowInBelgrade.getDay();
 
     const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
 
@@ -116,8 +117,8 @@ function updateDepartures() {
     medakovic3List.innerHTML = '';
     voivodeVlahovicaList.innerHTML = '';
 
-    const medakovic3Departures = isWeekend ? calculateMinutesUntilDeparture(raspored_m3_week, now) : calculateMinutesUntilDeparture(raspored_medakovic3, now);
-    const voivodeVlahovicaDepartures = isWeekend ? calculateMinutesUntilDeparture(raspored_vv_week, now) : calculateMinutesUntilDeparture(raspored_voivode_vlahovica, now);
+    const medakovic3Departures = isWeekend ? calculateMinutesUntilDeparture(raspored_m3_week, nowInBelgrade) : calculateMinutesUntilDeparture(raspored_medakovic3, nowInBelgrade);
+    const voivodeVlahovicaDepartures = isWeekend ? calculateMinutesUntilDeparture(raspored_vv_week, nowInBelgrade) : calculateMinutesUntilDeparture(raspored_voivode_vlahovica, nowInBelgrade);
 
     medakovic3Departures.forEach(mins => {
         const li = document.createElement('li');
@@ -134,20 +135,35 @@ function updateDepartures() {
     lastUpdatedMinutes = now.getMinutes();
 }
 
+setInterval(updateGlobalClock, 1000);
+setInterval(updateClock, 1000);
+window.onload = function() {
+    initialTime = new Date();
+    updateDepartures();
+    updateClock();
+};
+
 
 function formatTime(time, withoutSeconds = false) {
-    const hours = time.getHours().toString().padStart(2, '0');
-    const minutes = time.getMinutes().toString().padStart(2, '0');
-    if (withoutSeconds) {
-        return `${hours}:${minutes}`;
-    }
-    const seconds = time.getSeconds().toString().padStart(2, '0');
-    return `${hours}:${minutes}:${seconds}`;
+    const options = {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: withoutSeconds ? undefined : '2-digit',
+        hour12: false,
+        timeZone: 'Europe/Belgrade'
+    };
+    return time.toLocaleTimeString('en-GB', options);
 }
 
 function updateClock() {
     const now = new Date();
-    const options = { weekday: 'long', year: 'numeric', month: 'short', day: '2-digit' };
+    const options = { 
+        weekday: 'long', 
+        year: 'numeric', 
+        month: 'short', 
+        day: '2-digit',
+        timeZone: 'Europe/Belgrade'
+    };
     let dateStr = now.toLocaleDateString('sr-Latn-RS', options);
     dateStr = dateStr.charAt(0).toUpperCase() + dateStr.slice(1);
 
@@ -155,16 +171,18 @@ function updateClock() {
     document.getElementById('clock').textContent = formatTime(now);
 }
 
-setInterval(updateGlobalClock, 1000);
 setInterval(updateClock, 1000);
-
 window.onload = function() {
+    updateClock();
+};
+
+/*window.onload = function() {
     initialTime = new Date();
     updateDepartures();
     updateClock();
     showNearbyDepartures();
 };
-
+*/
 function refreshPage() {
     location.reload();
 }
@@ -176,9 +194,6 @@ document.getElementById('refreshButton').addEventListener('click', refreshPage);
 function showNearbyDepartures() {
     console.log("Funkcija showNearbyDepartures() je pozvana.");
 
-    const nearbyDeparturesDiv = document.getElementById('nearby-departures');
-    nearbyDeparturesDiv.innerHTML = '';
-
     const now = new Date();
     const currentHour = now.getHours();
     const dayOfWeek = now.getDay();
@@ -188,11 +203,9 @@ function showNearbyDepartures() {
     const medakovic3Departures = isWeekend ? raspored_m3_week : raspored_medakovic3;
     const voivodeVlahovicaDepartures = isWeekend ? raspored_vv_week : raspored_voivode_vlahovica;
 
-    const medakovic3Heading = document.createElement('h3');
-    medakovic3Heading.textContent = 'Polasci od Medaković 3:';
-    nearbyDeparturesDiv.appendChild(medakovic3Heading);
+    const medakovic3List = document.getElementById('medakovic3-nearby-list');
+    medakovic3List.innerHTML = ''; // Očistite prethodne polaske
 
-    const medakovic3List = document.createElement('ul');
     for (let i = currentHour - 1; i <= currentHour + 1; i++) {
         const listColor = i === currentHour ? '#3dc792' : i < currentHour ? 'red' : 'blue';
         medakovic3Departures.forEach(departure => {
@@ -205,13 +218,10 @@ function showNearbyDepartures() {
             }
         });
     }
-    nearbyDeparturesDiv.appendChild(medakovic3List);
 
-    const voivodeVlahovicaHeading = document.createElement('h3');
-    voivodeVlahovicaHeading.textContent = 'Polasci od Vojvode Vlahovića:';
-    nearbyDeparturesDiv.appendChild(voivodeVlahovicaHeading);
+    const voivodeVlahovicaList = document.getElementById('voivode-vlahovica-nearby-list');
+    voivodeVlahovicaList.innerHTML = ''; // Očistite prethodne polaske
 
-    const voivodeVlahovicaList = document.createElement('ul');
     for (let i = currentHour - 1; i <= currentHour + 1; i++) {
         const listColor = i === currentHour ? '#3dc792' : i < currentHour ? 'red' : 'blue';
         voivodeVlahovicaDepartures.forEach(departure => {
@@ -224,8 +234,41 @@ function showNearbyDepartures() {
             }
         });
     }
-    nearbyDeparturesDiv.appendChild(voivodeVlahovicaList);
 }
+
+document.getElementById('toggle-medakovic3').addEventListener('click', function() {
+    const list = document.getElementById('medakovic3-nearby-list');
+    if (list.style.display === 'none') {
+        showNearbyDepartures();
+        list.style.display = 'block';
+        this.textContent = 'Hide';
+    } else {
+        list.style.display = 'none';
+        this.textContent = 'Show';
+    }
+});
+
+document.getElementById('toggle-vv').addEventListener('click', function() {
+    const list = document.getElementById('voivode-vlahovica-nearby-list');
+    if (list.style.display === 'none') {
+        showNearbyDepartures();
+        list.style.display = 'block';
+        this.textContent = 'Hide';
+    } else {
+        list.style.display = 'none';
+        this.textContent = 'Show';
+    }
+});
+
+window.onload = function() {
+    initialTime = new Date();
+    updateDepartures();
+    updateClock();
+};
+
+
+
+
 
 
 function getNearbyDepartures(departureList, time, previousCount, nextCount) {
