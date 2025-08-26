@@ -18,7 +18,8 @@ const raspored_medakovic3 = [
     '19:53', '19:54', '20:10', '20:11', '20:27', '20:28',
     '20:44', '20:45', '21:01', '21:02', '21:18', '21:19',
     '21:35', '21:36', '21:53', '21:54', '22:11', '22:13',
-    '22:30', '22:31', '22:47', '23:05', '23:25', '23:45'
+    '22:30', '22:31', '22:47', '23:05', '23:25', '23:45',
+    
 ];
 
 const raspored_voivode_vlahovica = [
@@ -79,7 +80,12 @@ function parseTimeStr(timeStr) {
     const [hours, minutes] = timeStr.split(':').map(Number);
     const now = new Date();
     const dateInBelgrade = new Date(now.toLocaleString('en-US', { timeZone: 'Europe/Belgrade' }));
-    return new Date(dateInBelgrade.getFullYear(), dateInBelgrade.getMonth(), dateInBelgrade.getDate(), hours, minutes);
+    let polazakDate = new Date(dateInBelgrade.getFullYear(), dateInBelgrade.getMonth(), dateInBelgrade.getDate(), hours, minutes);
+    // Ako je polazak ranije od trenutnog vremena (npr. 00:53, a sada je 23:55), polazak je sledeći dan
+    if (polazakDate < dateInBelgrade && (hours < dateInBelgrade.getHours() || (hours === dateInBelgrade.getHours() && minutes < dateInBelgrade.getMinutes()))) {
+        polazakDate.setDate(polazakDate.getDate() + 1);
+    }
+    return polazakDate;
 }
 
 let initialTime = null;
@@ -107,34 +113,57 @@ function calculateMinutesUntilDeparture(departures, now) {
     }
     return minutesUntilDeparture;
 }
+function showModal(minutes, exactTime) {
+    const modal = document.getElementById('modal');
+    const modalTime = document.getElementById('modal-time');
+    const modalExact = document.getElementById('modal-exact');
+    modalTime.textContent = minutes === 0 ? 'Polazak je sada!' : `Polazak za ${minutes} minuta.`;
+    modalExact.textContent = `Tačno vreme polaska: ${exactTime}`;
+    modal.style.display = 'flex';
+}
+
+document.getElementById('close-modal').onclick = function() {
+    document.getElementById('modal').style.display = 'none';
+};
+window.onclick = function(event) {
+    const modal = document.getElementById('modal');
+    if (event.target === modal) {
+        modal.style.display = 'none';
+    }
+};
+
+function addClickableDepartures(listId, departures, now) {
+    const list = document.getElementById(listId);
+    list.innerHTML = '';
+    let count = 0;
+    for (const departureStr of departures) {
+        const departureTime = parseTimeStr(departureStr);
+        if (departureTime > now) {
+            const minutesUntil = Math.round((departureTime - now) / 60000);
+            const li = document.createElement('li');
+            li.textContent = minutesUntil === 0 ? 'Sada' : `Za ${minutesUntil} minuta`;
+            li.style.cursor = 'pointer';
+            li.onclick = function() {
+                showModal(minutesUntil, departureStr);
+            };
+            list.appendChild(li);
+            count++;
+            if (count === 5) break;
+        }
+    }
+}
+
 function updateDepartures() {
     const now = new Date();
     const nowInBelgrade = new Date(now.toLocaleString('en-US', { timeZone: 'Europe/Belgrade' }));
     const dayOfWeek = nowInBelgrade.getDay();
-
     const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
-
-    const medakovic3List = document.getElementById('medakovic3-list');
-    const voivodeVlahovicaList = document.getElementById('voivode-vlahovica-list');
-
-    medakovic3List.innerHTML = '';
-    voivodeVlahovicaList.innerHTML = '';
-
-    const medakovic3Departures = isWeekend ? calculateMinutesUntilDeparture(raspored_m3_week, nowInBelgrade) : calculateMinutesUntilDeparture(raspored_medakovic3, nowInBelgrade);
-    const voivodeVlahovicaDepartures = isWeekend ? calculateMinutesUntilDeparture(raspored_vv_week, nowInBelgrade) : calculateMinutesUntilDeparture(raspored_voivode_vlahovica, nowInBelgrade);
-
-    medakovic3Departures.forEach(mins => {
-        const li = document.createElement('li');
-        li.textContent = mins === 0 ? 'Sada' : `Za ${mins} minuta`;
-        medakovic3List.appendChild(li);
-    });
-
-    voivodeVlahovicaDepartures.forEach(mins => {
-        const li = document.createElement('li');
-        li.textContent = mins === 0 ? 'Sada' : `Za ${mins} minuta`;
-        voivodeVlahovicaList.appendChild(li);
-    });
-
+    const medakovic3ListId = 'medakovic3-list';
+    const voivodeVlahovicaListId = 'voivode-vlahovica-list';
+    const medakovic3Departures = isWeekend ? raspored_m3_week : raspored_medakovic3;
+    const voivodeVlahovicaDepartures = isWeekend ? raspored_vv_week : raspored_voivode_vlahovica;
+    addClickableDepartures(medakovic3ListId, medakovic3Departures, nowInBelgrade);
+    addClickableDepartures(voivodeVlahovicaListId, voivodeVlahovicaDepartures, nowInBelgrade);
     lastUpdatedMinutes = now.getMinutes();
 }
 
@@ -195,46 +224,76 @@ document.getElementById('refreshButton').addEventListener('click', refreshPage);
 
 
 function showNearbyDepartures() {
-    console.log("Funkcija showNearbyDepartures() je pozvana.");
-
     const now = new Date();
     const currentHour = now.getHours();
     const dayOfWeek = now.getDay();
-
     const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
-
     const medakovic3Departures = isWeekend ? raspored_m3_week : raspored_medakovic3;
     const voivodeVlahovicaDepartures = isWeekend ? raspored_vv_week : raspored_voivode_vlahovica;
 
-    const medakovic3List = document.getElementById('medakovic3-nearby-list');
-    medakovic3List.innerHTML = ''; // Očistite prethodne polaske
+    function getDeparturesForHours(departures, hoursArr) {
+        let found = [];
+        hoursArr.forEach(i => {
+            departures.forEach(departure => {
+                const departureHour = parseInt(departure.split(':')[0]);
+                if (departureHour === i) {
+                    found.push({time: departure, hour: i});
+                }
+            });
+        });
+        return found;
+    }
 
-    for (let i = currentHour - 1; i <= currentHour + 1; i++) {
-        const listColor = i === currentHour ? '#3dc792' : i < currentHour ? 'red' : 'blue';
-        medakovic3Departures.forEach(departure => {
-            const departureHour = parseInt(departure.split(':')[0]);
-            if (departureHour === i) {
-                const li = document.createElement('li');
-                li.textContent = departure;
-                li.style.backgroundColor = listColor;
-                medakovic3List.appendChild(li);
+    // Medaković 3
+    const medakovic3List = document.getElementById('medakovic3-nearby-list');
+    medakovic3List.innerHTML = '';
+    let medakovic3Found = getDeparturesForHours(medakovic3Departures, [currentHour-1, currentHour, currentHour+1]);
+    if (medakovic3Found.length === 0) {
+        // Pronađi prvi naredni sat sa polascima
+        for (let h = currentHour+2; h < 24; h++) {
+            let nextFound = getDeparturesForHours(medakovic3Departures, [h]);
+            if (nextFound.length > 0) {
+                medakovic3Found = nextFound;
+                break;
             }
+        }
+    }
+    if (medakovic3Found.length === 0) {
+        medakovic3List.innerHTML = '<li style="background:red;">Nema polazaka u narednim satima.</li>';
+    } else {
+        medakovic3Found.forEach(dep => {
+            const li = document.createElement('li');
+            li.textContent = dep.time;
+            if (dep.hour === currentHour) li.style.backgroundColor = '#3dc792';
+            else if (dep.hour < currentHour) li.style.backgroundColor = 'red';
+            else li.style.backgroundColor = 'blue';
+            medakovic3List.appendChild(li);
         });
     }
 
+    // Vojvode Vlahovica
     const voivodeVlahovicaList = document.getElementById('voivode-vlahovica-nearby-list');
-    voivodeVlahovicaList.innerHTML = ''; // Očistite prethodne polaske
-
-    for (let i = currentHour - 1; i <= currentHour + 1; i++) {
-        const listColor = i === currentHour ? '#3dc792' : i < currentHour ? 'red' : 'blue';
-        voivodeVlahovicaDepartures.forEach(departure => {
-            const departureHour = parseInt(departure.split(':')[0]);
-            if (departureHour === i) {
-                const li = document.createElement('li');
-                li.textContent = departure;
-                li.style.backgroundColor = listColor;
-                voivodeVlahovicaList.appendChild(li);
+    voivodeVlahovicaList.innerHTML = '';
+    let vvFound = getDeparturesForHours(voivodeVlahovicaDepartures, [currentHour-1, currentHour, currentHour+1]);
+    if (vvFound.length === 0) {
+        for (let h = currentHour+2; h < 24; h++) {
+            let nextFound = getDeparturesForHours(voivodeVlahovicaDepartures, [h]);
+            if (nextFound.length > 0) {
+                vvFound = nextFound;
+                break;
             }
+        }
+    }
+    if (vvFound.length === 0) {
+        voivodeVlahovicaList.innerHTML = '<li style="background:red;">Nema polazaka u narednim satima.</li>';
+    } else {
+        vvFound.forEach(dep => {
+            const li = document.createElement('li');
+            li.textContent = dep.time;
+            if (dep.hour === currentHour) li.style.backgroundColor = '#3dc792';
+            else if (dep.hour < currentHour) li.style.backgroundColor = 'red';
+            else li.style.backgroundColor = 'blue';
+            voivodeVlahovicaList.appendChild(li);
         });
     }
 }
@@ -319,3 +378,186 @@ function findNearestDeparture(departureList, time) {
 
     return nearestDeparture;
 }
+
+let notificationTimeouts = [];
+let notificationInterval = null;
+let notificationEndTime = null;
+
+function getUpcomingDeparturesInNext30Minutes(selectedStation) {
+    const now = new Date();
+    const nowInBelgrade = new Date(now.toLocaleString('en-US', { timeZone: 'Europe/Belgrade' }));
+    const dayOfWeek = nowInBelgrade.getDay();
+    const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
+    let departuresArr = [];
+    if (selectedStation === 'medakovic3') {
+        departuresArr = isWeekend ? raspored_m3_week : raspored_medakovic3;
+    } else {
+        departuresArr = isWeekend ? raspored_vv_week : raspored_voivode_vlahovica;
+    }
+    const departures = [];
+    for (const time of departuresArr) {
+        const depTime = parseTimeStr(time);
+        const diff = (depTime - nowInBelgrade) / 60000;
+        if (diff > 0 && diff <= 30) {
+            departures.push({station: selectedStation === 'medakovic3' ? 'Medaković 3' : 'Vojvode Vlahovića', time, minutes: Math.round(diff)});
+        }
+    }
+    return departures;
+}
+
+function startNotificationTimer() {
+    notificationEndTime = Date.now() + 30 * 60 * 1000;
+    const selectedStation = document.getElementById('station-select').value;
+    localStorage.setItem('notificationActive', 'true');
+    localStorage.setItem('notificationEndTime', notificationEndTime);
+    localStorage.setItem('notificationStation', selectedStation);
+    document.getElementById('notification-timer').style.display = 'inline-block';
+    updateTimerCountdown();
+    notificationInterval = setInterval(updateTimerCountdown, 1000);
+    scheduleNotifications();
+}
+
+function stopNotificationTimer() {
+    document.getElementById('notification-timer').style.display = 'none';
+    clearInterval(notificationInterval);
+    notificationInterval = null;
+    notificationEndTime = null;
+    notificationTimeouts.forEach(timeout => clearTimeout(timeout));
+    notificationTimeouts = [];
+    localStorage.removeItem('notificationActive');
+    localStorage.removeItem('notificationEndTime');
+    localStorage.removeItem('notificationStation');
+}
+
+function updateTimerCountdown() {
+    if (!notificationEndTime) return;
+    const remaining = Math.max(0, notificationEndTime - Date.now());
+    const min = Math.floor(remaining / 60000);
+    const sec = Math.floor((remaining % 60000) / 1000);
+    document.getElementById('timer-countdown').textContent = `${min}:${sec.toString().padStart(2, '0')}`;
+    if (remaining <= 0) stopNotificationTimer();
+}
+
+function showBusAlert(station, time, minutesUntil) {
+    const alertDiv = document.getElementById('bus-alert');
+    const alertText = document.getElementById('bus-alert-text');
+    let msg = `🚌 Polazak sa stanice ${station} u ${time}`;
+    if (minutesUntil === 0) {
+        msg += ' (polazak je sada!)';
+    } else if (minutesUntil === 1) {
+        msg += ' (za 1 minut)';
+    } else {
+        msg += ` (za ${minutesUntil} minuta)`;
+    }
+    alertText.textContent = msg;
+    alertDiv.style.display = 'flex';
+    setTimeout(() => {
+        alertDiv.style.display = 'none';
+    }, 12000); // automatski nestane posle 12 sekundi
+}
+document.getElementById('bus-alert-close').onclick = function() {
+    document.getElementById('bus-alert').style.display = 'none';
+};
+
+function showWebNotification(station, time, minutesUntil = 5) {
+    showBusAlert(station, time, minutesUntil); // prikaz na sajtu
+    if (Notification.permission === 'granted') {
+        let bodyText = `Polazak sa stanice ${station} u ${time}`;
+        if (minutesUntil === 0) {
+            bodyText += ' (polazak je sada!)';
+        } else if (minutesUntil === 1) {
+            bodyText += ' (za 1 minut)';
+        } else {
+            bodyText += ` (za ${minutesUntil} minuta)`;
+        }
+        new Notification('Polazak autobusa', {
+            body: bodyText
+        });
+    }
+}
+
+function scheduleNotifications() {
+    notificationTimeouts.forEach(timeout => clearTimeout(timeout));
+    notificationTimeouts = [];
+    const selectedStation = document.getElementById('station-select').value;
+    const departures = getUpcomingDeparturesInNext30Minutes(selectedStation);
+    const now = new Date();
+    const nowInBelgrade = new Date(now.toLocaleString('en-US', { timeZone: 'Europe/Belgrade' }));
+    departures.forEach(dep => {
+        const depTime = parseTimeStr(dep.time);
+        const notifyTime = depTime - 5 * 60000;
+        const delay = notifyTime - nowInBelgrade;
+        if (delay > 0) {
+            const timeout = setTimeout(() => {
+                showWebNotification(dep.station, dep.time, 5);
+            }, delay);
+            notificationTimeouts.push(timeout);
+        } else if (depTime > nowInBelgrade) {
+            // Ako je polazak za manje od 5 minuta, odmah prikazati notifikaciju sa tačnim brojem minuta
+            const minutesUntil = Math.round((depTime - nowInBelgrade) / 60000);
+            showWebNotification(dep.station, dep.time, minutesUntil);
+        }
+    });
+}
+
+document.getElementById('enableNotifications').onclick = function() {
+    if (localStorage.getItem('notificationActive') === 'true') {
+        // Timer je već aktivan, samo nastavi bez resetovanja
+        alert('Notifikacije su već uključene i timer je aktivan.');
+        return;
+    }
+    if (Notification.permission === 'granted') {
+        startNotificationTimer();
+    } else if (Notification.permission !== 'denied') {
+        Notification.requestPermission().then(permission => {
+            if (permission === 'granted') {
+                startNotificationTimer();
+            } else {
+                alert('Nije dozvoljeno prikazivanje notifikacija.');
+            }
+        });
+    } else {
+        alert('Nije dozvoljeno prikazivanje notifikacija.');
+    }
+};
+document.getElementById('disableNotifications').onclick = stopNotificationTimer;
+
+window.onload = function() {
+    initialTime = new Date();
+    updateDepartures();
+    updateClock();
+    // Restore notification timer if active
+    if (localStorage.getItem('notificationActive') === 'true') {
+        const endTime = parseInt(localStorage.getItem('notificationEndTime'));
+        const selectedStation = localStorage.getItem('notificationStation') || 'medakovic3';
+        document.getElementById('station-select').value = selectedStation;
+        notificationEndTime = endTime;
+        document.getElementById('notification-timer').style.display = 'inline-block';
+        updateTimerCountdown();
+        notificationInterval = setInterval(updateTimerCountdown, 1000);
+        scheduleNotifications();
+    }
+    // Restore theme
+    const theme = localStorage.getItem('theme');
+    const icon = document.getElementById('theme-toggle').querySelector('span');
+    if (theme === 'dark') {
+        document.body.classList.add('dark-mode');
+        icon.textContent = '☀️';
+    } else {
+        document.body.classList.remove('dark-mode');
+        icon.textContent = '🌙';
+    }
+}
+
+document.getElementById('theme-toggle').onclick = function() {
+    const body = document.body;
+    body.classList.toggle('dark-mode');
+    const icon = document.getElementById('theme-toggle').querySelector('span');
+    if (body.classList.contains('dark-mode')) {
+        localStorage.setItem('theme', 'dark');
+        icon.textContent = '☀️';
+    } else {
+        localStorage.setItem('theme', 'light');
+        icon.textContent = '🌙';
+    }
+};

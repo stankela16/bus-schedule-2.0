@@ -14,7 +14,14 @@
     <link rel="icon" type="image/png" sizes="32x32" href="/assets/images/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/assets/images/favicon-16x16.png">
     <!-- Web App Manifest -->
-    <link rel="manifest" href="/assets/images/site.webmanifest">
+    <link rel="manifest" href="assets/images/site.webmanifest">
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function() {
+          navigator.serviceWorker.register('service-worker.js');
+        });
+      }
+    </script>
     <style>
         .tedi-link {
             color: rgb(28, 196, 145); /* Change to your desired color */
@@ -54,19 +61,42 @@
         <ul id="voivode-vlahovica-nearby-list" style="display: none;"></ul>
     </div>
     
-    
+    <div class="notification-section">
+        <label for="station-select">Početna stanica:</label>
+        <select id="station-select">
+            <option value="medakovic3">Medaković 3</option>
+            <option value="voivode_vlahovica">Vojvode Vlahovića</option>
+        </select>
+        <button id="enableNotifications">Uključi notifikacije za narednih 30 minuta</button>
+        <div id="notification-timer" style="display:none;">
+            <span>Preostalo vreme: <span id="timer-countdown">30:00</span></span>
+            <button id="disableNotifications" style="margin-left:10px;">Prekini notifikacije</button>
+        </div>
+    </div>
 
     <div id="date"></div>
     <div id="clock"></div>
 
+    <div id="modal" class="modal" style="display:none;">
+        <div class="modal-content">
+            <span id="close-modal" class="close">&times;</span>
+            <h2>Detalji polaska</h2>
+            <p id="modal-time"></p>
+            <p id="modal-exact"></p>
+        </div>
+    </div>
 
+    <div id="bus-alert" class="bus-alert" style="display:none;">
+        <span id="bus-alert-text"></span>
+        <button id="bus-alert-close" class="bus-alert-close">×</button>
+    </div>
     
+    <button id="theme-toggle" class="theme-toggle"><span>🌙</span></button>
     
-
     <script src="script.js"></script>
     <footer class="footer">
         <div class="footer-content">
-            <p>© 2024 <a href="https://imgur.com/a/bSn9Jz8" target="_blank" class="tedi-link">Tedi</a>. Sva prava zadržana.</p>
+            <p>© 2025 <a href="https://imgur.com/a/bSn9Jz8" target="_blank" class="tedi-link">Tedi</a>. Sva prava zadržana.</p>
             <div class="social-media">
                 <a href="https://github.com/stankela16" target="_blank"><i class="fab fa-github"></i></a>
             </div>
