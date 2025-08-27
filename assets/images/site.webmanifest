@@ -1,7 +1,8 @@
 {
 	"name": "Bus Schedule",
 	"short_name": "BusSchedule",
-	"start_url": "./index.html",
+	"start_url": "./",
+	"scope": "./",
 	"description": "Prikaz narednih polazaka autobusa za Medaković 3 i Vojvode Vlahovića.",
 	"icons": [
 		{
