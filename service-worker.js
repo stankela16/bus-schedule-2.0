@@ -22,9 +22,16 @@ self.addEventListener('install', event => {
 });
 
 self.addEventListener('fetch', event => {
+  const req = event.request;
+  // Navigation fallback for SPA/PWA: serve index.html for navigations
+  if (req.mode === 'navigate') {
+    event.respondWith(
+      fetch(req).catch(() => caches.match('./index.html'))
+    );
+    return;
+  }
   event.respondWith(
-    caches.match(event.request)
-      .then(response => response || fetch(event.request))
+    caches.match(req).then(response => response || fetch(req))
   );
 });
 
