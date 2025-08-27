@@ -346,6 +346,26 @@ body.dark-mode .theme-toggle {
     color: #3dc792;
 }
 
+/* Dark mode adjustments for modal visibility */
+body.dark-mode .modal {
+    background: rgba(0,0,0,0.55);
+}
+body.dark-mode .modal-content {
+    background: #2a2c2d;
+    color: #e0e0e0;
+    box-shadow: 0 4px 32px rgba(0,0,0,0.4);
+}
+body.dark-mode .modal-content h2,
+body.dark-mode .modal-content p {
+    color: #e0e0e0;
+}
+body.dark-mode .close {
+    color: #3dc792;
+}
+body.dark-mode .close:hover {
+    color: #5be0ae;
+}
+
 /* Theme toggle button */
 .theme-toggle {
     position: absolute;

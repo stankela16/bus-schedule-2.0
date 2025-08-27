@@ -7,12 +7,12 @@
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
     <!-- Favicon for browsers -->
-    <link rel="icon" href="/assets/images/favicon.ico" type="image/x-icon">
+    <link rel="icon" href="assets/images/favicon.ico" type="image/x-icon">
     <!-- Apple Touch Icon -->
-    <link rel="apple-touch-icon" sizes="180x180" href="/assets/images/apple-touch-icon.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="assets/images/apple-touch-icon.png">
     <!-- Favicon for Android Chrome -->
-    <link rel="icon" type="image/png" sizes="32x32" href="/assets/images/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="/assets/images/favicon-16x16.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/images/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="assets/images/favicon-16x16.png">
     <!-- Web App Manifest -->
     <link rel="manifest" href="assets/images/site.webmanifest">
     <script>
@@ -51,12 +51,13 @@
 
     <div id="nearby-departures">
         <h3>Polasci od Medaković 3:</h3>
-        <ul id="medakovic3-list"></ul>
+        <!-- Unique IDs for the 'nearby' section to avoid duplicates -->
+        <ul id="medakovic3-list-nearby-header"></ul>
         <button id="toggle-medakovic3">Show</button>
         <ul id="medakovic3-nearby-list" style="display: none;"></ul>
     
         <h3>Polasci od Vojvode Vlahovića:</h3>
-        <ul id="voivode-vlahovica-list"></ul>
+        <ul id="voivode-vlahovica-list-nearby-header"></ul>
         <button id="toggle-vv">Show</button>
         <ul id="voivode-vlahovica-nearby-list" style="display: none;"></ul>
     </div>
@@ -74,8 +75,7 @@
         </div>
     </div>
 
-    <div id="date"></div>
-    <div id="clock"></div>
+    
 
     <div id="modal" class="modal" style="display:none;">
         <div class="modal-content">
